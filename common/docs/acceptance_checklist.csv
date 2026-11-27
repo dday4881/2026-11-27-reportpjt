@@ -1,20 +1,20 @@
 ﻿Test ID,난이도,시나리오,테스트 입력·절차,Acceptance Evidence,요구사항,결과(pass/fail/not_run),증거 파일/실측 값,한계/조치
-T-01,Basic,환경·독립성,"Windows + 새 프로젝트에서 환경 확인, 이전 소스 경로 없이 실행","DB 이름 일치, GPU 확인, LLM configured와 paid live 구별","B-01,B-02",not_run,,
-T-02,Basic,DB 구조·보존,기존 report_read_view·reports를 SELECT만 수행,"6종 Category 조회, 사전·사후 DB 행 수/해시 불변",B-03,not_run,,
-T-03,Basic,CUDA E5·Vector,실제 Query Embedding → pgvector Top-k,"cuda:0, 384차원, E5 Prefix, valid indexes만 후보","B-04,B-05",not_run,,
-T-04,Basic,Document·Grounding,보고서 검색 → Document → RAG Answer,"원문·Metadata·ID 일치, 출처 없는 문장 유보","B-06,B-08",not_run,,
-T-05,Basic,Cross-Encoder,같은 후보를 CUDA Reranker로 재정렬,"순위 전후 비교, 후보 집합 불변, latency 측정",B-07,not_run,,
-T-06,Basic,실제 Tool 단독 실행,rag_search(query) / lookup_status(report_id),실제 DB·RAG 값과 Tool Output Contract 일치,"B-09,B-10",not_run,,
-T-07,Basic,Agent Tool Loop,복합 질문으로 create_agent.invoke 수행,"실제 tool_calls·ToolMessage ID 대응, 두 도구 결과 확인",B-11,not_run,,
-T-08,Basic,FastAPI 통합,POST /api/v1/agent/ask 실제 실행,200/422/503 등 계약 및 응답 필드 검증,B-12,not_run,,
-T-09,Basic,Citation·업무 완결성,복합질문·가짜 출처·Tool 실행 0건 결과,"없는 출처 거부, 필요한 도구 실행 없는 completed 부적합",B-13,not_run,,
-T-10,Basic,오류·No-answer,없는 report_id·무관 질문·Tool 오류·재시도 제한,"추측 금지, insufficient_evidence/failed 분기","B-14,B-15",not_run,,
-T-11,Intermediate,Rewrite·Multi-query·Filter,"의미 보존, Dedup, Category 필터","Query lineage/IDs 기록, 필터 누락 0","I-01,I-02,I-03",not_run,,
-T-12,Intermediate,Retrieval A/B,동일 Top-k 후보에서 Rerank OFF/ON,"rank·latency 비교, 후보 집합 불변",I-04,not_run,,
-T-13,Intermediate,Pydantic 강화,잘못된 report_id/category/k/json/out schema,422/Tool invalid_input과 외부 오류 구분,"I-05,I-06",not_run,,
-T-14,Intermediate,Gold 기반 평가,고정 정답 질문 6건 이상 Recall@k·MRR,"Grounded Gold, no-answer N/A, 표·평균 산출","I-07,I-08",not_run,,
-T-15,Advanced,모듈 테스트,Stub DB·모델/LLM으로 단위 테스트,실제 유료 호출 없이 입력·출력 재현,A-01,not_run,,
-T-16,Advanced,Tool 반복 상한,반복 도구 호출 유도 시나리오,"Middleware 제한 발동, 시간·호출 예산 초과 처리",A-02,not_run,,
-T-17,Advanced,nDCG·Injection,graded label 및 주입/허위 인용,"nDCG 검증, 문서 명령 불이행, false citation 거절","A-03,A-04",not_run,,
-T-18,Advanced,장애·완료 판정,DB 오류/LLM 429/허위 completed 시나리오,"실패 코드, 실제 tool id/증거 존재 확인","A-05,A-06",not_run,,
-T-19,Advanced,운영 보고,Latency/usage·회귀테스트·README,"실측/예시 구분, 원인·성공·실패 수 기록","A-07,A-08",not_run,,
+T-01,Basic,환경·독립성,"Windows + 새 프로젝트에서 환경 확인, 이전 소스 경로 없이 실행","DB 이름 일치, GPU 확인, LLM configured와 paid live 구별","B-01,B-02",pass,"live: scripts.preflight, test.006_test --http, Postman 01 (GET /health 200 OK: database=report_agent_lab, pgvector=0.8.7, gpu=cuda:0, llm=configured, llm_live_verified=false)","초기 CPU 전용 PyTorch 설치로 HTTP 503(GPU_UNAVAILABLE) 발생 -> CUDA 12.6 지원 PyTorch(cu126) 재설치 후 cuda:0 정상 인식 해결"
+T-02,Basic,DB 구조·보존,기존 report_read_view·reports를 SELECT만 수행,"6종 Category 조회, 사전·사후 DB 행 수/해시 불변",B-03,pass,"live: test.005_test (outputs/db_before.json 10개 테이블 스냅샷), test.016_test (DB unchanged: True), 6종 Category(DAILY_WORK, DATA_PROCESSING, EXPERIMENT, MEETING, PROMPT, RESEARCH_PLAN) 조회 및 pgAdmin READ ONLY 대조","초기 .env 미설정으로 DB_UNAVAILABLE 발생 -> 프로젝트 루트 .env의 postgresql+psycopg URL 및 load_dotenv() 적용으로 해결"
+T-03,Basic,CUDA E5·Vector,실제 Query Embedding → pgvector Top-k,"cuda:0, 384차원, E5 Prefix, valid indexes만 후보","B-04,B-05",pass,"live: test.007_test (device=cuda:0, dim=384, norm_squared=1.00000005, query_embedding=293.89ms), test.008_test (eligible_vectors=180, Top-1 RPT-63 distance=0.0787)","Windows + Python 3.15 환경에서 transformers 멀티스레드 가중치 로딩 시 Segmentation fault(access violation) 발생 -> HF_DEACTIVATE_ASYNC_LOAD=1 설정으로 해결"
+T-04,Basic,Document·Grounding,보고서 검색 → Document → RAG Answer,"원문·Metadata·ID 일치, 출처 없는 문장 유보","B-06,B-08",pass,"fixture: pytest test_framework.py / live: test.010_test (context_chars=357, RPT-63 메타데이터), test.013_test (RPT-63 인용), Postman 05 (RPT-105 요약 및 원문 대조 일치)","단일 문서 컨텍스트 기반 근거 인용 준수, 원문에 없는 추측성 문장 생성 차단"
+T-05,Basic,Cross-Encoder,같은 후보를 CUDA Reranker로 재정렬,"순위 전후 비교, 후보 집합 불변, latency 측정",B-07,pass,"fixture: pytest test_framework.py::test_T05_same_candidates_and_context / live: test.009_test (BAAI/bge-reranker-v2-m3, cuda:0, 8개 후보 불변 재정렬: RPT-149 6위->3위 상승, RPT-63 score=0.9987, rerank_latency=164.69ms)","무료 HF Hub 요청 경고 출력되나 로컬 캐시 및 GPU 추론 정상 동작"
+T-06,Basic,실제 Tool 단독 실행,rag_search(query) / lookup_status(report_id),실제 DB·RAG 값과 Tool Output Contract 일치,"B-09,B-10",pass,"fixture: pytest test_sql_contract.py / live: test.013_test, outputs/live_checks_paid.json, Postman 05 (rag_search found, RPT-105), Postman 06 (lookup_status found, 보고서 1: index_status=ready, revision=1, embedding_fresh=true)","유료 LLM 호출 플래그 검증 후 allow_paid_llm=false 복원 완료"
+T-07,Basic,Agent Tool Loop,복합 질문으로 create_agent.invoke 수행,"실제 tool_calls·ToolMessage ID 대응, 두 도구 결과 확인",B-11,pass,"fixture: pytest test_framework.py::test_T07_framework_loop / live: test.014_test (tool_calls=2, ledger 일치), Postman 07 (rag_search + lookup_status 동시 실행, tool_call_id 중복 없음, required_tools_observed=true)","복합 질의 시 두 도구의 독립적 호출 및 최종 답변 병합 정상 동작 확인"
+T-08,Basic,FastAPI 통합,POST /api/v1/agent/ask 실제 실행,200/422/503 등 계약 및 응답 필드 검증,B-12,pass,"fixture: pytest tests/ (41 passed in 0.81s, test_http_contract.py 포함) / live: test.015_test, Postman 01(200 OK), Postman 02·03·04(422 VALIDATION_ERROR)","초기 실행 시 app.main 경로 지정 및 포트 8000 점유 충돌(Errno 10048) 조정 후 정상 기동"
+T-09,Basic,Citation·업무 완결성,복합질문·가짜 출처·Tool 실행 0건 결과,"없는 출처 거부, 필요한 도구 실행 없는 completed 부적합",B-13,pass,"fixture: pytest test_contracts.py (test_T09_* 전수 통과) / live: Postman 07 1차 시도에서 LLM 인용 형식 위반 시 HTTP 500 OUTPUT_CONTRACT_ERROR(agent_citation)로 정상 차단 확인 후 2차 재시도 200 OK 통과","LLM의 확률적 출력 오류를 Validator가 계약 위반으로 정확히 탐지·차단함을 실측 검증"
+T-10,Basic,오류·No-answer,없는 report_id·무관 질문·Tool 오류·재시도 제한,"추측 금지, insufficient_evidence/failed 분기","B-14,B-15",pass,"fixture: pytest test_contracts.py::test_T10_* / live: outputs/live_checks_paid.json, Postman 08 (missing_report_id=999999 -> status=insufficient_evidence, lookup_status=not_found), Postman 09 (No-answer -> status=insufficient_evidence, sources=[])","Postman 08 1차 실행 시 중복 Environment 중 비활성 환경만 수정하여 report_id=1이 조회(3/4 실패)되었으나, 활성 환경의 missing_report_id=999999 반영 후 4/4 통과"
+T-11,Intermediate,Rewrite·Multi-query·Filter,"의미 보존, Dedup, Category 필터","Query lineage/IDs 기록, 필터 누락 0","I-01,I-02,I-03",not_run,,"DAY30 Basic 구현 범위 외"
+T-12,Intermediate,Retrieval A/B,동일 Top-k 후보에서 Rerank OFF/ON,"rank·latency 비교, 후보 집합 불변",I-04,not_run,,"DAY30 Basic 구현 범위 외"
+T-13,Intermediate,Pydantic 강화,잘못된 report_id/category/k/json/out schema,422/Tool invalid_input과 외부 오류 구분,"I-05,I-06",not_run,,"DAY30 Basic 구현 범위 외"
+T-14,Intermediate,Gold 기반 평가,고정 정답 질문 6건 이상 Recall@k·MRR,"Grounded Gold, no-answer N/A, 표·평균 산출","I-07,I-08",not_run,,"DAY30 Basic 구현 범위 외"
+T-15,Advanced,모듈 테스트,Stub DB·모델/LLM으로 단위 테스트,실제 유료 호출 없이 입력·출력 재현,A-01,not_run,,"DAY30 Basic 구현 범위 외"
+T-16,Advanced,Tool 반복 상한,반복 도구 호출 유도 시나리오,"Middleware 제한 발동, 시간·호출 예산 초과 처리",A-02,not_run,,"DAY30 Basic 구현 범위 외"
+T-17,Advanced,nDCG·Injection,graded label 및 주입/허위 인용,"nDCG 검증, 문서 명령 불이행, false citation 거절","A-03,A-04",not_run,,"DAY30 Basic 구현 범위 외"
+T-18,Advanced,장애·완료 판정,DB 오류/LLM 429/허위 completed 시나리오,"실패 코드, 실제 tool id/증거 존재 확인","A-05,A-06",not_run,,"DAY30 Basic 구현 범위 외"
+T-19,Advanced,운영 보고,Latency/usage·회귀테스트·README,"실측/예시 구분, 원인·성공·실패 수 기록","A-07,A-08",not_run,,"DAY30 Basic 구현 범위 외"
