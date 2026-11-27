@@ -1,6 +1,7 @@
 # DAY30 BASIC — LangChain Report Assistant 구현 및 검증 보고서
 
 - **작성일:** 2026-11-27
+- **작성자:** Cyberdyne Systems Model 101
 - **구현 범위:** DAY30 BASIC (`B-01` ~ `B-15` / `T-01` ~ `T-10`)
 - **최종 판정:** **PASS** (단계별 검증, `pytest` 41건, Live 검증, Postman 9건, DB 불변성 검증 전수 통과)
 
@@ -54,17 +55,17 @@
 
 총 9개 원본 요청(자동 검사 28개 항목)에 대해 개별 실행 및 `pgAdmin` `READ ONLY` SQL 원문 대조를 완료했습니다.
 
-| 번호 | 요청 이름 | 구분 | HTTP | 최종 판정 | 핵심 검증 내용 및 비고 |
-| :---: | :--- | :---: | :---: | :---: | :--- |
-| **01** | `API-00 T-01 Health` | 무료 | `200` | **PASS** | `db=ready`, `gpu=cuda:0`, `eligible_vectors=180`, `llm=configured` |
-| **02** | `API-01 T-08 빈 질문` | 무료 | `422` | **PASS** | 공백 질문 입력 시 `VALIDATION_ERROR` 반환 |
-| **03** | `API-01 T-08 잘못된 Category` | 무료 | `422` | **PASS** | 허용된 6종 Category 외 값 입력 시 `VALIDATION_ERROR` 반환 |
-| **04** | `API-01 T-08 서버 설정 변경 금지` | 무료 | `422` | **PASS** | API 요청을 통한 실행 상한 변경 시도 차단 (`VALIDATION_ERROR`) |
-| **05** | `API-01 T-06 RAG only` | 유료 | `200` | **PASS** | `RPT-105`('보고서 개요 대표성 점검') 요약 및 `rag_search` `found` |
-| **06** | `API-01 T-06 DB only` | 유료 | `200` | **PASS** | `보고서 1: index_status=ready, revision=1, embedding_fresh=true`, `sources=[]` |
-| **07** | `API-01 T-07/T-09 복합 질문` | 유료 | `200` | **PASS** | 1차 시도 `500 OUTPUT_CONTRACT_ERROR(agent_citation)` 차단 확인 후 2차 재시도 통과 |
-| **08** | `API-01 T-10 미존재 ID` | 유료 | `200` | **PASS** | `missing_report_id=999999` 조회 시 `insufficient_evidence`, `not_found`, `sources=[]` |
-| **09** | `API-01 T-10 No-answer` | 유료 | `200` | **PASS** | 무관 질문 시 추측 없이 `insufficient_evidence`, `rag_search` `not_found` |
+| 번호 | 요청 이름 | 구분 | HTTP | 최종 판정 | 핵심 검증 내용 및 비고 | 검증 스크린샷 |
+| :---: | :--- | :---: | :---: | :---: | :--- | :---: |
+| **01** | `API-00 T-01 Health` | 무료 | `200` | **PASS** | `db=ready`, `gpu=cuda:0`, `eligible_vectors=180`, `llm=configured` | <img src="./scripts/images/T01.png" width="750" alt="T01"> |
+| **02** | `API-01 T-08 빈 질문` | 무료 | `422` | **PASS** | 공백 질문 입력 시 `VALIDATION_ERROR` 반환 | <img src="./scripts/images/T02.png" width="750" alt="T02"> |
+| **03** | `API-01 T-08 잘못된 Category` | 무료 | `422` | **PASS** | 허용된 6종 Category 외 값 입력 시 `VALIDATION_ERROR` 반환 | <img src="./scripts/images/T03.png" width="750" alt="T03"> |
+| **04** | `API-01 T-08 서버 설정 변경 금지` | 무료 | `422` | **PASS** | API 요청을 통한 실행 상한 변경 시도 차단 (`VALIDATION_ERROR`) | <img src="./scripts/images/T04.png" width="750" alt="T04"> |
+| **05** | `API-01 T-06 RAG only` | 유료 | `200` | **PASS** | `RPT-105`('보고서 개요 대표성 점검') 요약 및 `rag_search` `found` | <img src="./scripts/images/T05.png" width="750" alt="T05"> |
+| **06** | `API-01 T-06 DB only` | 유료 | `200` | **PASS** | `보고서 1: index_status=ready, revision=1, embedding_fresh=true`, `sources=[]` | <img src="./scripts/images/T06.png" width="750" alt="T06"> |
+| **07** | `API-01 T-07/T-09 복합 질문` | 유료 | `200` | **PASS** | 1차 시도 `500 OUTPUT_CONTRACT_ERROR(agent_citation)` 차단 확인 후 2차 재시도 통과 | **[1차 차단]**<br><img src="./scripts/images/T07.png" width="750" alt="T07"><br><br>**[2차 통과]**<br><img src="./scripts/images/T07-1.png" width="750" alt="T07-1"> |
+| **08** | `API-01 T-10 미존재 ID` | 유료 | `200` | **PASS** | `missing_report_id=999999` 조회 시 `insufficient_evidence`, `not_found`, `sources=[]` | <img src="./scripts/images/T08.png" width="750" alt="T08"> |
+| **09** | `API-01 T-10 No-answer` | 유료 | `200` | **PASS** | 무관 질문 시 추측 없이 `insufficient_evidence`, `rag_search` `not_found` | <img src="./scripts/images/T09.png" width="750" alt="T09"> |
 
 ---
 
